@@ -246,7 +246,7 @@ namespace inmarsat
             }
             else
             {
-                logger->error("Invalid CRC!");
+                // logger->error("Invalid CRC!");
             }
         }
 
