@@ -206,7 +206,10 @@ namespace inmarsat
                         }
                         else
                         {
-                            logger->debug(pkt_type_to_name(pkt_id));
+                            std::string name = pkt_type_to_name(pkt_id);
+                            if (std::find(stringList.begin(), stringList.end(), name) == stringList.end()) {
+                                logger->debug(name);
+                            }
                         }
                         break;
                     }
