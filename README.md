@@ -1,7 +1,11 @@
 This is a fork of SatDump with a few modifications to make it easier to use when decoding STD-C and ACARS messages using the CLI interface.  
 
 The changes in this fork include:  
-- SSU and AES System Table Broadcast Index messages are neither saved to file nor printed to the terminal log
+- The following message types are neither saved to file nor printed to the terminal log
+  - SSU
+  - AES System Table Broadcast Index
+  - Acknowledge (RACK / TACK P Channel, PACK R Channel)
+  - T Channel Assignment
 - Invalid CRC messages are not printed to the terminal log
 
 Here is a copy of the json (98W.json) file I use to grab all of the STD-C and AERO 10500k channels from Inmarsat 4F3 (98W):
