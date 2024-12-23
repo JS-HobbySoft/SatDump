@@ -19,7 +19,14 @@ namespace inmarsat
 {
     namespace aero
     {
-        std::vector<std::string> stringList = {"SSU", "AES System Table Broadcast (Index)", "Reserved 0x26"};
+        std::vector<std::string> stringList = 
+        {
+            "SSU", 
+            "AES System Table Broadcast (Index)", 
+            "Reserved 0x26",
+            "Acknowledge (RACK / TACK P Channel, PACK R Channel)",
+            "T Channel Assignment"
+        };
         AeroParserModule::AeroParserModule(std::string input_file, std::string output_file_hint, nlohmann::json parameters) : ProcessingModule(input_file, output_file_hint, parameters)
         {
             buffer = new uint8_t[SIGNAL_UNIT_SIZE_BYTES];
