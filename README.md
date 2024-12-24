@@ -71,7 +71,7 @@ Here is a copy of the json (98W.json) file I use to grab all of the STD-C and AE
 
 ```
 
-Here is the command I use to run this fork:
+Here is the command line I use:
 ```
 ./satdump live inmarsat_aero_105 /home/user/satdump/VFO/20241222 --source airspy --samplerate 10e6 --frequency 1542160000 --bias --gain_type 0 --general_gain 21 --multi_vfo /home/user/satdump/98W.json
 ```
