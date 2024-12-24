@@ -7,7 +7,7 @@ The changes in this fork include:
   - Acknowledge (RACK / TACK P Channel, PACK R Channel)
   - T Channel Assignment
 - Invalid CRC messages are not printed to the terminal log
-- The frequency is reported in the PSK demod progress log messages to make it possible to distinguish which signals have low SNR
+- The frequency and VFO name are reported in the PSK demod progress log messages to make it possible to distinguish which signals have low SNR
 
 Here is a copy of the json (98W.json) file I use to grab all of the STD-C and AERO 10500k channels from Inmarsat 4F3 (98W):
 
