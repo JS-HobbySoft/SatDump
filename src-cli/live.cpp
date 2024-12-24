@@ -227,6 +227,7 @@ int main_live(int argc, char *argv[])
                 vparams["buffer_size"] = dsp::STREAM_BUFFER_SIZE; // This is required, as we WILL go over the (usually) default 8192 size
                 vparams["start_timestamp"] = (double)time(0);     // Some pipelines need this
                 vparams["samplerate"] = samplerate;
+                vparams["vfo_freq"] = vfrequency;
 
                 std::string path = output_file + "/" + cfg.key();
                 if (!std::filesystem::exists(path))
