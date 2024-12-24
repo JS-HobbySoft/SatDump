@@ -5,6 +5,9 @@
 #include "common/widgets/themed_widgets.h"
 #include "common/utils.h"
 #include "common/codings/rotation.h"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 namespace inmarsat
 {
@@ -20,6 +23,8 @@ namespace inmarsat
             d_aero_interleaver_blocks = parameters["inter_blocks"].get<int>();
 
             d_aero_ber_thresold = parameters.contains("ber_thresold") ? parameters["ber_thresold"].get<float>() : 1.0;
+
+            freq_for_info_log = parameters["vfo_freq"].get<double>();
 
             if (is_c_channel)
                 d_aero_sync_size = 52 * 2;
@@ -244,11 +249,15 @@ namespace inmarsat
                 module_stats["correlator_corr"] = correlator_cor;
                 module_stats["viterbi_ber"] = viterbi->ber();
 
+                std::stringstream ss;
+                ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+                std::string freq_for_log = ss.str();
+
                 if (time(NULL) % 10 == 0 && lastTime != time(NULL))
                 {
                     lastTime = time(NULL);
                     std::string lock_state = correlator_locked ? "SYNCED" : "NOSYNC";
-                    logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + ", Viterbi BER : " + std::to_string(viterbi->ber() * 100) + "%%, Lock : " + lock_state);
+                    logger->info("Freq: " + freq_for_log + " Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + ", Viterbi BER : " + std::to_string(viterbi->ber() * 100) + "%%, Lock : " + lock_state);
                 }
             }
 
