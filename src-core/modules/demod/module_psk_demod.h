@@ -21,6 +21,7 @@ namespace demod
         std::shared_ptr<dsp::MMClockRecoveryBlock<complex_t>> rec;
 
         std::string constellation_type;
+        double freq_for_info_log;
         bool is_bpsk, is_oqpsk;
 
         float d_rrc_alpha;
