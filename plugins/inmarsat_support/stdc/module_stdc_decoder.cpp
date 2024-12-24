@@ -20,7 +20,14 @@ namespace inmarsat
             buffer_synchronized = new int8_t[ENCODED_FRAME_SIZE];
             buffer_depermuted = new int8_t[ENCODED_FRAME_SIZE];
             buffer_vitdecoded = new uint8_t[ENCODED_FRAME_SIZE];
-            freq_for_info_log = parameters["vfo_freq"].get<double>();
+            if (parameters.contains("vfo_freq"))
+            {
+                freq_for_info_log = parameters["vfo_freq"].get<double>();
+            }
+            else
+            {
+                freq_for_info_log = 0;
+            }
         }
 
         std::vector<ModuleDataType> STDCDecoderModule::getInputTypes()
@@ -124,7 +131,7 @@ namespace inmarsat
                 {
                     lastTime = time(NULL);
                     std::string lock_state = gotFrame ? "SYNCED" : "NOSYNC";
-                    logger->info("Freq: " + freq_for_log + " Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, Viterbi BER : " + std::to_string(viterbi.ber() * 100) + "%%, Lock : " + lock_state);
+                    logger->info("Freq: " + freq_for_log + ", Viterbi BER : " + std::to_string(viterbi.ber() * 100) + "%%, Lock : " + lock_state);
                 }
             }
 

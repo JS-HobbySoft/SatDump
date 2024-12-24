@@ -57,8 +57,15 @@ namespace demod
         if (parameters.count("clock_omega_relative_limit") > 0)
             d_clock_omega_relative_limit = parameters["clock_omega_relative_limit"].get<float>();
 
-        freq_for_info_log = parameters["vfo_freq"].get<double>();
-        
+        if (parameters.count("vfo_freq") > 0)
+        {
+            freq_for_info_log = parameters["vfo_freq"].get<double>();
+        }
+        else
+        {
+            freq_for_info_log = 0;
+        }
+
         // BPSK Stuff
         is_bpsk = constellation_type == "bpsk";
 

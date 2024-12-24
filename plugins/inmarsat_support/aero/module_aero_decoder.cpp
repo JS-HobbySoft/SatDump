@@ -24,7 +24,14 @@ namespace inmarsat
 
             d_aero_ber_thresold = parameters.contains("ber_thresold") ? parameters["ber_thresold"].get<float>() : 1.0;
 
-            freq_for_info_log = parameters["vfo_freq"].get<double>();
+            if (parameters.contains("vfo_freq"))
+            {
+                freq_for_info_log = parameters["vfo_freq"].get<double>();
+            }
+            else
+            {
+                freq_for_info_log = 0;
+            }
 
             if (is_c_channel)
                 d_aero_sync_size = 52 * 2;
@@ -257,7 +264,7 @@ namespace inmarsat
                 {
                     lastTime = time(NULL);
                     std::string lock_state = correlator_locked ? "SYNCED" : "NOSYNC";
-                    logger->info("Freq: " + freq_for_log + " Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + ", Viterbi BER : " + std::to_string(viterbi->ber() * 100) + "%%, Lock : " + lock_state);
+                    logger->info("Freq: " + freq_for_log + ", Viterbi BER : " + std::to_string(viterbi->ber() * 100) + "%%, Lock : " + lock_state);
                 }
             }
 
