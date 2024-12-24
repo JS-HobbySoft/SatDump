@@ -213,6 +213,7 @@ int main_live(int argc, char *argv[])
                 double vfrequency = cfg.value()["frequency"];
                 std::string vpipeline = cfg.value()["pipeline"];
                 nlohmann::json vparams = cfg.value()["parameters"];
+                std::string vfo_name = cfg.key();
 
                 double final_shift = double(frequency) - vfrequency;
 
@@ -228,6 +229,7 @@ int main_live(int argc, char *argv[])
                 vparams["start_timestamp"] = (double)time(0);     // Some pipelines need this
                 vparams["samplerate"] = samplerate;
                 vparams["vfo_freq"] = vfrequency;
+                vparams["vfo_name"] = vfo_name;
 
                 std::string path = output_file + "/" + cfg.key();
                 if (!std::filesystem::exists(path))

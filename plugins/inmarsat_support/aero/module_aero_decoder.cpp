@@ -33,6 +33,15 @@ namespace inmarsat
                 freq_for_info_log = 0;
             }
 
+            if (parameters.contains("vfo_name"))
+            {
+                name_for_info_log = parameters["vfo_name"].get<std::string>();
+            }
+            else
+            {
+                name_for_info_log = "none";
+            }
+
             if (is_c_channel)
                 d_aero_sync_size = 52 * 2;
             else
@@ -264,7 +273,7 @@ namespace inmarsat
                 {
                     lastTime = time(NULL);
                     std::string lock_state = correlator_locked ? "SYNCED" : "NOSYNC";
-                    logger->info("Freq: " + freq_for_log + ", Viterbi BER : " + std::to_string(viterbi->ber() * 100) + "%%, Lock : " + lock_state);
+                    logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + ", Viterbi BER : " + std::to_string(viterbi->ber() * 100) + "%%, Lock : " + lock_state);
                 }
             }
 

@@ -344,7 +344,7 @@ namespace inmarsat
                 if (time(NULL) % 10 == 0 && lastTime != time(NULL))
                 {
                     lastTime = time(NULL);
-                    logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%");
+//                    logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%");
                 }
             }
 

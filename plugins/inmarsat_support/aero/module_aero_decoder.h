@@ -27,6 +27,7 @@ namespace inmarsat
             int d_aero_total_frm_size;
 
             double freq_for_info_log;
+            std::string name_for_info_log;
             
             float d_aero_ber_thresold = 1.0;
 

@@ -22,6 +22,7 @@ namespace demod
 
         std::string constellation_type;
         double freq_for_info_log;
+        std::string name_for_info_log;
         bool is_bpsk, is_oqpsk;
 
         float d_rrc_alpha;
