@@ -4,6 +4,9 @@
 #include <filesystem>
 #include "common/widgets/themed_widgets.h"
 #include "common/utils.h"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 namespace inmarsat
 {
@@ -17,6 +20,23 @@ namespace inmarsat
             buffer_synchronized = new int8_t[ENCODED_FRAME_SIZE];
             buffer_depermuted = new int8_t[ENCODED_FRAME_SIZE];
             buffer_vitdecoded = new uint8_t[ENCODED_FRAME_SIZE];
+            if (parameters.contains("vfo_freq"))
+            {
+                freq_for_info_log = parameters["vfo_freq"].get<double>();
+            }
+            else
+            {
+                freq_for_info_log = 0;
+            }
+
+            if (parameters.contains("vfo_name"))
+            {
+                name_for_info_log = parameters["vfo_name"].get<std::string>();
+            }
+            else
+            {
+                name_for_info_log = "none";
+            }
         }
 
         std::vector<ModuleDataType> STDCDecoderModule::getInputTypes()
@@ -112,11 +132,15 @@ namespace inmarsat
                 module_stats["viterbi_ber"] = viterbi.ber();
                 module_stats["last_count"] = frm_num;
 
+                std::stringstream ss;
+                ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+                std::string freq_for_log = ss.str();
+
                 if (time(NULL) % 10 == 0 && lastTime != time(NULL))
                 {
                     lastTime = time(NULL);
                     std::string lock_state = gotFrame ? "SYNCED" : "NOSYNC";
-                    logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, Viterbi BER : " + std::to_string(viterbi.ber() * 100) + "%%, Lock : " + lock_state);
+                    logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + ", Viterbi BER : " + std::to_string(viterbi.ber() * 100) + "%%, Lock : " + lock_state);
                 }
             }
 

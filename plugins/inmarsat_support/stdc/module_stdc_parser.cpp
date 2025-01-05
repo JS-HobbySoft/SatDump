@@ -160,7 +160,7 @@ namespace inmarsat
                     egc_parser.push_message(msg);
                 }
                 else
-                    logger->info("Packet : " + get_id_name(id));
+//                    logger->info("Packet : " + get_id_name(id));
 
                 if (is_gui)
                 {
@@ -246,7 +246,7 @@ namespace inmarsat
                 if (time(NULL) % 10 == 0 && lastTime != time(NULL))
                 {
                     lastTime = time(NULL);
-                    logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%");
+//                    logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%");
                 }
             }
 

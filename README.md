@@ -1,9 +1,8 @@
 This is a fork of SatDump with a few modifications to make it easier to use when decoding STD-C and ACARS messages using the CLI interface.  
 
 The changes in this fork include:  
-- SSU and AES System Table Broadcast Index messages are neither saved to file nor printed to the terminal log
 - The following message types are neither saved to file nor printed to the terminal log
-  - SSU
+  - SSU and AES System Table Broadcast Index messages are neither saved to file nor printed to the terminal log
   - AES System Table Broadcast Index
   - Acknowledge (RACK / TACK P Channel, PACK R Channel)
   - T Channel Assignment
