@@ -9,7 +9,7 @@ The changes in this fork include:
 - Invalid CRC messages are not printed to the terminal log
 - The frequency and VFO name are reported in the PSK demod progress log messages to make it possible to distinguish which signals have low SNR
 
-Here is a copy of the json file I use to grab all of the STD-C and AERO 10500k channels from Inmarsat 4F3 (98W):
+Here is a copy of the json file (98W.json) I use to grab all of the STD-C and AERO 10500 channels from Inmarsat 4F3 (98W):
 ```
 {
 	"vfo0": {
@@ -70,7 +70,7 @@ Here is a copy of the json file I use to grab all of the STD-C and AERO 10500k c
 
 ```
 
-Here is the command I use to run this fork:
+Here is the command I use:
 ```
-./satdump live inmarsat_aero_105 /home/user/satdump/VFO/20241222 --source airspy --samplerate 10e6 --frequency 1542160000 --bias --gain_type 0 --general_gain 21 --multi_vfo /home/user/satdump/98W.json
+./satdump live inmarsat_aero_105 /home/user/SDR/satdump/VFO/`date "+%Y%m%d"` --source airspy --samplerate 10e6 --frequency 1542160000 --bias --gain_type 0 --general_gain 21 --multi_vfo /home/user/SDR/satdump/98W.json
 ```
