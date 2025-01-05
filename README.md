@@ -2,10 +2,15 @@ This is a fork of SatDump with a few modifications to make it easier to use when
 
 The changes in this fork include:  
 - SSU and AES System Table Broadcast Index messages are neither saved to file nor printed to the terminal log
-
+- The following message types are neither saved to file nor printed to the terminal log
+  - SSU
+  - AES System Table Broadcast Index
+  - Acknowledge (RACK / TACK P Channel, PACK R Channel)
+  - T Channel Assignment
+- Invalid CRC messages are not printed to the terminal log
+- The frequency and VFO name are reported in the PSK demod progress log messages to make it possible to distinguish which signals have low SNR
 
 Here is a copy of the json file I use to grab all of the STD-C and AERO 10500k channels from Inmarsat 4F3 (98W):
-
 ```
 {
 	"vfo0": {
