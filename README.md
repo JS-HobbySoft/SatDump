@@ -2,7 +2,7 @@ This is a fork of SatDump with a few modifications to make it easier to use when
 
 The changes in this fork include:  
 - The following message types are neither saved to file nor printed to the terminal log
-  - SSU and AES System Table Broadcast Index messages are neither saved to file nor printed to the terminal log
+  - SSU
   - AES System Table Broadcast Index
   - Acknowledge (RACK / TACK P Channel, PACK R Channel)
   - T Channel Assignment
