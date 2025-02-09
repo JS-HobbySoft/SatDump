@@ -16,6 +16,9 @@ namespace demod
         std::shared_ptr<dsp::FIRBlock<float>> rrc;
         std::shared_ptr<dsp::MMClockRecoveryBlock<float>> rec;
 
+        double freq_for_info_log;
+        std::string name_for_info_log;
+
         float d_rrc_alpha;
         int d_rrc_taps = 31;
 
