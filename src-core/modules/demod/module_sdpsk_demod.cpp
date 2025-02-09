@@ -163,7 +163,7 @@ namespace demod
             if (time(NULL) % 10 == 0 && lastTime != time(NULL))
             {
                 lastTime = time(NULL);
-                logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + "Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, SNR : " + std::to_string(snr) + "dB," + " Peak SNR: " + std::to_string(peak_snr) + "dB");
+                logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + " Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, SNR : " + std::to_string(snr) + "dB," + " Peak SNR: " + std::to_string(peak_snr) + "dB");
             }
         }
 
