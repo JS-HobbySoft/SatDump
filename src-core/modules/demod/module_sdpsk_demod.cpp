@@ -99,8 +99,11 @@ namespace demod
         else
             filesize = 0;
 
-        data_out = std::ofstream(d_output_file_hint + ".soft", std::ios::binary);
-        d_output_files.push_back(d_output_file_hint + ".soft");
+        if (output_data_type == DATA_FILE)
+        {    
+            data_out = std::ofstream(d_output_file_hint + ".soft", std::ios::binary);
+            d_output_files.push_back(d_output_file_hint + ".soft");
+        }    
 
         logger->info("Using input baseband " + d_input_file);
         logger->info("Demodulating to " + d_output_file_hint + ".soft");
