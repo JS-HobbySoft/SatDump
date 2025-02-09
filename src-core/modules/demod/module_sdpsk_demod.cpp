@@ -3,6 +3,9 @@
 #include "logger.h"
 #include "imgui/imgui.h"
 #include <volk/volk.h>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 namespace demod
 {
@@ -39,6 +42,23 @@ namespace demod
         if (parameters.count("clock_omega_relative_limit") > 0)
             d_clock_omega_relative_limit = parameters["clock_omega_relative_limit"].get<float>();
 
+        if (parameters.count("vfo_freq") > 0)
+        {
+            freq_for_info_log = parameters["vfo_freq"].get<double>();
+        }
+        else
+        {
+            freq_for_info_log = 0;
+        }
+        if (parameters.count("vfo_name") > 0)
+        {
+            name_for_info_log = parameters["vfo_name"].get<std::string>();
+        }
+        else
+        {
+            name_for_info_log = "none";
+        }
+        
         name = "SDPSK Demodulator";
         show_freq = false;
 
@@ -133,10 +153,14 @@ namespace demod
             module_stats["snr"] = snr;
             module_stats["peak_snr"] = peak_snr;
 
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+            std::string freq_for_log = ss.str();
+            
             if (time(NULL) % 10 == 0 && lastTime != time(NULL))
             {
                 lastTime = time(NULL);
-                logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, SNR : " + std::to_string(snr) + "dB," + " Peak SNR: " + std::to_string(peak_snr) + "dB");
+                logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + "Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, SNR : " + std::to_string(snr) + "dB," + " Peak SNR: " + std::to_string(peak_snr) + "dB");
             }
         }
 
