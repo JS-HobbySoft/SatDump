@@ -9,63 +9,107 @@ The changes in this fork include:
 - Invalid CRC messages are not printed to the terminal log
 - The frequency and VFO name are reported in the PSK demod progress log messages to make it possible to distinguish which signals have low SNR
 
-Here is a copy of the json file (98W.json) I use to grab all of the STD-C and AERO 10500 channels from Inmarsat 4F3 (98W):
+Here is a copy of the json file (98W.json) I use to grab all of the STD-C and AERO 600/1200/10500 channels from Inmarsat 4F3 (98W):
 ```
 {
-	"vfo0": {
+        "stdc00": {
                 "frequency": 1537700000,
                 "pipeline": "inmarsat_std_c"
         },
 
-	"vfo1": {
+        "stdc01": {
                 "frequency": 1539525000,
                 "pipeline": "inmarsat_std_c"
         },
 
-	"vfo2": {
+        "stdc02": {
                 "frequency": 1539545000,
                 "pipeline": "inmarsat_std_c"
         },
 
-	"vfo3": {
+        "stdc03": {
                 "frequency": 1539555000,
                 "pipeline": "inmarsat_std_c"
         },
 
-	"vfo4": {
+        "stdc04": {
                 "frequency": 1539565000,
                 "pipeline": "inmarsat_std_c"
         },
 
-	"vfo5": {
+        "stdc05": {
                 "frequency": 1539585000,
                 "pipeline": "inmarsat_std_c"
         },
 
-	"vfo6": {
+        "stdc06": {
                 "frequency": 1539685000,
                 "pipeline": "inmarsat_std_c"
         },
 
-	"vfo7": {
-                "frequency": 1546006000,
+        "acars07": {
+                "frequency": 1546005000,
                 "pipeline": "inmarsat_aero_105"
         },
-	"vfo8": {
-                "frequency": 1546021000,
-                "pipeline": "inmarsat_aero_105"
-        },
-
-	"vfo9": {
-                "frequency": 1546063500,
+        "acars08": {
+                "frequency": 1546020000,
                 "pipeline": "inmarsat_aero_105"
         },
 
-	"vfo10": {
-                "frequency": 1546078500,
+        "acars09": {
+                "frequency": 1546062500,
                 "pipeline": "inmarsat_aero_105"
+        },
+
+        "acars10": {
+                "frequency": 1546077500,
+                "pipeline": "inmarsat_aero_105"
+        },
+
+        "acars11": {
+                "frequency": 1545050000,
+                "pipeline": "inmarsat_aero_6"
+        },
+
+        "acars12": {
+                "frequency": 1545060000,
+                "pipeline": "inmarsat_aero_6"
+        },
+
+        "acars13": {
+                "frequency": 1545065000,
+                "pipeline": "inmarsat_aero_6"
+        },
+
+        "acars14": {
+                "frequency": 1545075000,
+                "pipeline": "inmarsat_aero_12"
+        },
+
+        "acars15": {
+                "frequency": 1545080000,
+                "pipeline": "inmarsat_aero_6"
+        },
+
+        "acars16": {
+                "frequency": 1545090000,
+                "pipeline": "inmarsat_aero_6"
+        },
+
+        "acars17": {
+                "frequency": 1545100000,
+                "pipeline": "inmarsat_aero_6"
+        },
+
+        "acars18": {
+                "frequency": 1545170000,
+                "pipeline": "inmarsat_aero_6"
+        },
+
+        "acars19": {
+                "frequency": 1545175000,
+                "pipeline": "inmarsat_aero_6"
         }
-
 }
 
 ```
