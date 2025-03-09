@@ -51,6 +51,7 @@ Here is a copy of the json file (98W.json) I use to grab all of the STD-C and AE
                 "frequency": 1546005000,
                 "pipeline": "inmarsat_aero_105"
         },
+
         "acars08": {
                 "frequency": 1546020000,
                 "pipeline": "inmarsat_aero_105"
@@ -114,10 +115,22 @@ Here is a copy of the json file (98W.json) I use to grab all of the STD-C and AE
 
 ```
 
-Here is the command I use:
+Here is the SatDump command line I use to save the STD-C and AERO messages:
 ```
 ./satdump live inmarsat_aero_105 /home/user/SDR/satdump/VFO/`date "+%Y%m%d"` --source airspy --samplerate 10e6 --frequency 1542160000 --bias --gain_type 0 --general_gain 21 --multi_vfo /home/user/SDR/satdump/98W.json
 ```
+
+Here is the command I use to quickly scan through the STD-C messages:
+```
+find /home/user/SDR/satdump/VFO/`date +%Y%m%d`/stdc* -type f -exec cat {} \; | grep \"message\" | sed 's#\\r\\n#\n#g' | less
+```
+
+Here is the command I use to quickly scan through the AERO messages:
+```
+find /home/user/SDR/satdump/VFO/`date +%Y%m%d`/acars* -type f -exec cat {} \; | grep "\"message\"\|free_text" | grep -v "\"\"\,\|\/\|\#M\|\#E\|\#D" | sed 's#\\r\\n#\n#g' | less
+```
+
+
 
 # Start of Original SatDump readme
 
