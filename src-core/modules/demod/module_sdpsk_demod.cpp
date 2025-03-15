@@ -160,11 +160,24 @@ namespace demod
             ss << std::fixed << std::setprecision(0) << freq_for_info_log;
             std::string freq_for_log = ss.str();
             
+            std::string snr_pad;
+            std::string peaksnr_pad;
+
+            if (std::to_string(snr).length() == 8)
+                snr_pad = " " + std::to_string(snr);
+            else
+                snr_pad = std::to_string(snr);
+
+            if (std::to_string(peak_snr).length() == 8)
+                peaksnr_pad = " " + std::to_string(peak_snr);
+            else
+                peaksnr_pad = std::to_string(peak_snr);           
+            
             if (time(NULL) % 10 == 0 && lastTime != time(NULL))
             {
                 lastTime = time(NULL);
                 if (filesize == 0)
-                    logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + ", SNR : " + std::to_string(snr) + "dB," + " Peak SNR: " + std::to_string(peak_snr) + "dB");
+                    logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + ", SNR: " + snr_pad + "dB," + " Peak SNR: " + peaksnr_pad + "dB");
                 else
                     logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + " Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, SNR : " + std::to_string(snr) + "dB," + " Peak SNR: " + std::to_string(peak_snr) + "dB");
             }
