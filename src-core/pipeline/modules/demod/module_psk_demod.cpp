@@ -2,6 +2,9 @@
 #include "common/dsp/filter/firdes.h"
 #include "imgui/imgui.h"
 #include "logger.h"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 namespace satdump
 {
@@ -58,6 +61,24 @@ namespace satdump
                 if (parameters.count("clock_omega_relative_limit") > 0)
                     d_clock_omega_relative_limit = parameters["clock_omega_relative_limit"].get<float>();
 
+
+                if (parameters.count("vfo_freq") > 0)
+                {
+                    freq_for_info_log = parameters["vfo_freq"].get<double>();
+                }
+                else
+                {
+                    freq_for_info_log = 0;
+                }
+                if (parameters.count("vfo_name") > 0)
+                {
+                    name_for_info_log = parameters["vfo_name"].get<std::string>();
+                }
+                else
+                {
+                    name_for_info_log = "none";
+                }
+                
                 // BPSK Stuff
                 is_bpsk = constellation_type == "bpsk";
 
@@ -237,7 +258,14 @@ namespace satdump
 
             nlohmann::json PSKDemodModule::getModuleStats()
             {
+
+                std::stringstream ss;
+                ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+                std::string freq_for_log = ss.str();
+                
                 nlohmann::json v; // auto v = satdump::pipeline::base::FileStreamToFileStreamModule::getModuleStats();
+                v["vfo name"] = name_for_info_log;
+                v["frequency"] = freq_for_log;
                 v["progress"] = ((double)progress / (double)filesize);
                 v["snr"] = snr;
                 v["peak_snr"] = peak_snr;

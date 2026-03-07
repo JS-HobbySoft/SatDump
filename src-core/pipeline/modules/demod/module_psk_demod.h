@@ -27,6 +27,9 @@ namespace satdump
                 std::string constellation_type;
                 bool is_bpsk, is_oqpsk;
 
+                double freq_for_info_log;
+                std::string name_for_info_log;
+
                 float d_rrc_alpha;
                 int d_rrc_taps = 31;
                 float d_loop_bw;

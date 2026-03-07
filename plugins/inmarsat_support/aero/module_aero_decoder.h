@@ -25,6 +25,10 @@ namespace inmarsat
             int d_aero_interleaver_block_size;
             int d_aero_info_size;
             int d_aero_total_frm_size;
+            
+            double freq_for_info_log;
+            std::string name_for_info_log;
+            std::string freq_for_log;
 
             float d_aero_ber_thresold = 1.0;
 

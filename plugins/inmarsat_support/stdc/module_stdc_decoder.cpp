@@ -4,6 +4,9 @@
 #include "logger.h"
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 namespace inmarsat
 {
@@ -17,6 +20,23 @@ namespace inmarsat
             buffer_synchronized = new int8_t[ENCODED_FRAME_SIZE];
             buffer_depermuted = new int8_t[ENCODED_FRAME_SIZE];
             buffer_vitdecoded = new uint8_t[ENCODED_FRAME_SIZE];
+            if (parameters.contains("vfo_freq"))
+            {
+                freq_for_info_log = parameters["vfo_freq"].get<double>();
+            }
+            else
+            {
+                freq_for_info_log = 0;
+            }
+
+            if (parameters.contains("vfo_name"))
+            {
+                name_for_info_log = parameters["vfo_name"].get<std::string>();
+            }
+            else
+            {
+                name_for_info_log = "none";
+            }
 
             fsfsm_file_ext = ".frm";
         }
@@ -78,7 +98,13 @@ namespace inmarsat
 
         nlohmann::json STDCDecoderModule::getModuleStats()
         {
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+            std::string freq_for_log = ss.str();
+            
             auto v = satdump::pipeline::base::FileStreamToFileStreamModule::getModuleStats();
+            v["vfo name"] = name_for_info_log;
+            v["frequency"] = freq_for_log;
             v["deframer_lock"] = gotFrame;
             v["viterbi_ber"] = viterbi.ber();
             v["last_count"] = frm_num;

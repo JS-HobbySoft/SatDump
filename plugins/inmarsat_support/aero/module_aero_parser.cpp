@@ -9,6 +9,10 @@
 #include "satdump_vars.h"
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
 
 #define SIGNAL_UNIT_SIZE_BYTES 12
 
@@ -16,6 +20,16 @@ namespace inmarsat
 {
     namespace aero
     {
+        std::vector<std::string> stringList = 
+        {
+            "SSU", 
+            "AES System Table Broadcast (Index)", 
+            "Reserved 0x26",
+            "Acknowledge (RACK / TACK P Channel, PACK R Channel)",
+            "T Channel Assignment",
+            "Log Control",
+            "Request For Acknowledgement"
+        };
         AeroParserModule::AeroParserModule(std::string input_file, std::string output_file_hint, nlohmann::json parameters)
             : satdump::pipeline::base::FileStreamToFileStreamModule(input_file, output_file_hint, parameters)
         {
@@ -111,14 +125,16 @@ namespace inmarsat
                                            (timeReadable->tm_min > 9 ? std::to_string(timeReadable->tm_min) : "0" + std::to_string(timeReadable->tm_min)) +             // Minutes mm
                                            (timeReadable->tm_sec > 9 ? std::to_string(timeReadable->tm_sec) : "0" + std::to_string(timeReadable->tm_sec)) + "Z";        // Seconds ss
 
-                std::string path = directory + "/" + utc_filename + ".json";
-                int i = 1;
-                while (std::filesystem::exists(path))
-                    path = directory + "/" + utc_filename + "_" + std::to_string(i++) + ".json";
+                if (std::find(stringList.begin(), stringList.end(), pkt_name) == stringList.end()) {
+                    std::string path = directory + "/" + utc_filename + ".json";
+                    int i = 1;
+                    while (std::filesystem::exists(path))
+                        path = directory + "/" + utc_filename + "_" + std::to_string(i++) + ".json";
 
-                std::ofstream outf(path, std::ios::binary);
-                outf << msg.dump(4);
-                outf.close();
+                    std::ofstream outf(path, std::ios::binary);
+                    outf << msg.dump(4);
+                    outf.close();
+                }
             }
         }
 
@@ -182,7 +198,11 @@ namespace inmarsat
                         }
                         else
                         {
-                            logger->debug(pkt_type_to_name(pkt_id));
+                            std::string name = pkt_type_to_name(pkt_id);
+                            if (std::find(stringList.begin(), stringList.end(), name) == stringList.end()) 
+                            {
+                                logger->debug(name);
+                            }
                         }
                         break;
                     }
@@ -190,9 +210,12 @@ namespace inmarsat
                     if (!final_pkt.contains("msg_name"))
                     {
                         std::string name = pkt_type_to_name(pkt_id);
-                        if (name.find("Reserved") == std::string::npos)
-                            final_pkt["msg_name"] = name;
-                        logger->info("Packet : " + name);
+                        if (std::find(stringList.begin(), stringList.end(), name) == stringList.end()) 
+                        {
+                            if (name.find("Reserved") == std::string::npos)
+                                final_pkt["msg_name"] = name;
+                            logger->info("Packet : " + name);
+                        }
                     }
 
                     final_pkt["timestamp"] = time(0);
@@ -227,7 +250,7 @@ namespace inmarsat
             }
             else
             {
-                logger->error("Invalid CRC!");
+                // logger->error("Invalid CRC!");
             }
         }
 

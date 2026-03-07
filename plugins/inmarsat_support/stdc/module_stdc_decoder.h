@@ -20,6 +20,9 @@ namespace inmarsat
 
             viterbi::Viterbi27 viterbi;
 
+            double freq_for_info_log;
+            std::string name_for_info_log;
+
             // UI Stuff
             float ber_history[200];
             float cor_history[200];

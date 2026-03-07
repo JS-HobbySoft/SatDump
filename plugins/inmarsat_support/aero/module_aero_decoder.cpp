@@ -6,6 +6,9 @@
 #include "utils/binary.h"
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
 
 namespace inmarsat
 {
@@ -22,6 +25,28 @@ namespace inmarsat
             d_aero_interleaver_blocks = parameters["inter_blocks"].get<int>();
 
             d_aero_ber_thresold = parameters.contains("ber_thresold") ? parameters["ber_thresold"].get<float>() : 1.0;
+
+            if (parameters.contains("vfo_freq"))
+            {
+                freq_for_info_log = parameters["vfo_freq"].get<double>();
+            }
+            else
+            {
+                freq_for_info_log = 0;
+            }
+
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+            std::string freq_for_log = ss.str();
+
+            if (parameters.contains("vfo_name"))
+            {
+                name_for_info_log = parameters["vfo_name"].get<std::string>();
+            }
+            else
+            {
+                name_for_info_log = "none";
+            }
 
             if (is_c_channel)
                 d_aero_sync_size = 52 * 2;
@@ -202,6 +227,8 @@ namespace inmarsat
         nlohmann::json AeroDecoderModule::getModuleStats()
         {
             auto v = satdump::pipeline::base::FileStreamToFileStreamModule::getModuleStats();
+            v["vfo name"] = name_for_info_log;
+            v["frequency"] = freq_for_log;
             v["correlator_lock"] = correlator_locked;
             v["correlator_corr"] = correlator_cor;
             v["viterbi_ber"] = viterbi->ber();
