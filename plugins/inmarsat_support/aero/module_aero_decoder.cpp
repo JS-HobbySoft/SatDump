@@ -35,10 +35,6 @@ namespace inmarsat
                 freq_for_info_log = 0;
             }
 
-            std::stringstream ss;
-            ss << std::fixed << std::setprecision(0) << freq_for_info_log;
-            std::string freq_for_log = ss.str();
-
             if (parameters.contains("vfo_name"))
             {
                 name_for_info_log = parameters["vfo_name"].get<std::string>();
@@ -226,6 +222,10 @@ namespace inmarsat
 
         nlohmann::json AeroDecoderModule::getModuleStats()
         {
+            std::stringstream ss;
+            ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+            std::string freq_for_log = ss.str();
+
             auto v = satdump::pipeline::base::FileStreamToFileStreamModule::getModuleStats();
             v["vfo name"] = name_for_info_log;
             v["frequency"] = freq_for_log;
