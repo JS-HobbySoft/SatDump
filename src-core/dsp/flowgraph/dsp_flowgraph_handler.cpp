@@ -1,16 +1,13 @@
 #include "dsp_flowgraph_handler.h"
 #include "common/widgets/menuitem_tooltip.h"
 #include "core/backend.h"
-
 #include "dsp/flowgraph/dsp_flowgraph_register.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_flags.h"
 #include "imgui/imnodes/imnodes.h"
 #include "logger.h"
-
 #include "nlohmann/json_utils.h"
 #include <complex.h>
-#include <fstream>
 
 namespace satdump
 {
@@ -20,7 +17,7 @@ namespace satdump
         {
             handler_tree_icon = u8"\uf92f";
 
-            ndsp::registerNodesInFlowgraph(flowgraph);
+            ndsp::flowgraph::registerNodesInFlowgraph(flowgraph);
 
             if (file != "")
                 flowgraph.setJSON(loadCborFile(file));
@@ -38,19 +35,33 @@ namespace satdump
 
         void DSPFlowGraphHandler::drawMenu()
         {
-            bool running = flowgraph.is_running;
+            bool running = flowgraph.isRunning();
 
-            if (ImGui::CollapsingHeader("Variables"))
+            if (ImGui::CollapsingHeader("Flowgraph"))
             {
+                ImGui::Checkbox("Debug Mode", &flowgraph.debug_mode);
+            }
+
+            if (ImGui::CollapsingHeader("Variables", ImGuiTreeNodeFlags_DefaultOpen))
+            {
+                for (auto &v : flowgraph.variables)
+                {
+                    ImGui::SeparatorText(v.first.c_str());
+                    ImGui::InputDouble(std::string("##" + v.first).c_str(), &v.second);
+                    ImGui::SameLine();
+
+                    if (ImGui::Button(("Delete##" + v.first).c_str()))
+                    {
+                        flowgraph.variables.erase(v.first);
+                        break;
+                    }
+                }
+
                 if (running)
                     style::beginDisabled();
 
-                for (auto &v : flowgraph.variables)
-                {
-                    ImGui::Text("%s", v.first.c_str());
-                    ImGui::SameLine();
-                    ImGui::InputDouble(std::string("##" + v.first).c_str(), &v.second);
-                }
+                if (flowgraph.variables.size())
+                    ImGui::SeparatorText("Add/Update");
 
                 ImGui::InputText("##addvarname", &to_add_var_name);
                 ImGui::SameLine();
@@ -62,17 +73,22 @@ namespace satdump
 
                 if (running)
                     style::endDisabled();
+
+                if (ImGui::Button("Update"))
+                    flowgraph.updateVars();
             }
 
-            if (ImGui::CollapsingHeader("Flowgraph"))
+            if (ImGui::CollapsingHeader("Blocks"))
             {
-                ImGui::Checkbox("Debug Mode", &flowgraph.debug_mode);
+                ImGui::SetNextItemWidth(ImGui::GetWindowSize().x);
+                ImGui::InputTextWithHint("##SearchBlocks", "Search Blocks", &node_search);
+                flowgraph.renderAddMenuList(node_search);
             }
         }
 
         void DSPFlowGraphHandler::drawMenuBar()
         {
-            bool running = flowgraph.is_running;
+            bool running = flowgraph.isRunning();
 
             if (running)
             {
@@ -95,6 +111,9 @@ namespace satdump
                 (is_save_as = widgets::MenuItemTooltip(u8"\ueb4a", "Save file as")) ||                //
                 (ImGui::IsKeyDown(ImGuiKey_ReservedForModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)))
             {
+                if (current_file == "")
+                    is_save_as = true;
+
                 auto fun = [this, is_save_as]()
                 {
                     std::string save_at = is_save_as ? backend::saveFileDialog({{"SatDump DSP Flowgraph", "satdump_dsp_flowgraph"}}, "", "flowgraph.satdump_dsp_flowgraph") : current_file;
@@ -123,20 +142,6 @@ namespace satdump
                 };
                 tq.push(fun);
             }
-
-#if 0
-            if (ImGui::MenuItem("To Clipboard"))
-            {
-                std::string json = flowgraph.getJSON().dump(4);
-                ImGui::SetClipboardText(json.c_str());
-            }
-
-            if (ImGui::MenuItem("From Clipboard"))
-            {
-                nlohmann::json v = nlohmann::json::parse(ImGui::GetClipboardText());
-                flowgraph.setJSON(v);
-            }
-#endif
         }
 
         void DSPFlowGraphHandler::drawContents(ImVec2 win_size)
@@ -157,6 +162,8 @@ namespace satdump
             ImGui::End();
 
             ctx.end();
+
+            flowgraph.renderWindows();
         }
     } // namespace handlers
 } // namespace satdump
