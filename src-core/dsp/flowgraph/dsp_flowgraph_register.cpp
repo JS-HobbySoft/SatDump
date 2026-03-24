@@ -5,7 +5,6 @@
 
 #include "dsp/agc/agc.h"
 #include "dsp/agc/agc_fast.h"
-#include "dsp/agc/blk_agc.h"
 #include "dsp/clock_recovery/clock_recovery_mm.h"
 #include "dsp/clock_recovery/clock_recovery_mm_fast.h"
 #include "dsp/conv/char_to_float.h"
@@ -21,6 +20,10 @@
 #include "dsp/conv/real_to_complex.h"
 #include "dsp/conv/short_to_float.h"
 #include "dsp/conv/uchar_to_float.h"
+#include "dsp/digital/binary_slicer.h"
+#include "dsp/digital/cadu_deframer.h"
+#include "dsp/digital/cadu_derand.h"
+#include "dsp/digital/differential_decoder.h"
 #include "dsp/displays/const_disp.h"
 #include "dsp/displays/hist_disp.h"
 #include "dsp/fft/fft_pan.h"
@@ -155,9 +158,6 @@ namespace satdump
                 registerNodeSimple<ndsp::AGCFastBlock<complex_t>>(flowgraph, "AGC/Agc Fast CC");
                 registerNodeSimple<ndsp::AGCFastBlock<float>>(flowgraph, "AGC/Agc Fast FF");
 
-                registerNodeSimple<ndsp::BlkAGCBlock<complex_t>>(flowgraph, "AGC/Block Agc CC");
-                registerNodeSimple<ndsp::BlkAGCBlock<float>>(flowgraph, "AGC/Block Agc FF");
-
                 registerNodeSimple<ndsp::MultiplyBlock<float>>(flowgraph, "Utils/Multiply FF");
                 registerNodeSimple<ndsp::MultiplyBlock<complex_t>>(flowgraph, "Utils/Multiply CC");
 
@@ -244,6 +244,11 @@ namespace satdump
                 registerNodeSimple<ndsp::PSKDemodHierBlock>(flowgraph, "Modem/PSK Demod");
 
                 registerNodeSimple<ndsp::PSKSnrEstimatorBlock>(flowgraph, "Utils/PSK SNR Estimator");
+
+                registerNodeSimple<ndsp::BinarySlicerBlock>(flowgraph, "Digital/Binary Slicer");
+                registerNodeSimple<ndsp::DifferentialDecoderBlock>(flowgraph, "Digital/Differential Decoder");
+                registerNodeSimple<ndsp::CADUDeframerBlock>(flowgraph, "Digital/CADU Deframer");
+                registerNodeSimple<ndsp::CADUDerandBlock>(flowgraph, "Digital/CADU Derand");
 
                 eventBus->fire_event<RegisterNodesEvent>({flowgraph.node_internal_registry});
 
