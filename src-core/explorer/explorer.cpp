@@ -63,15 +63,8 @@ namespace satdump
             // Enable adding handlers to the explorer externally
             eventBus->register_handler<ExplorerAddHandlerEvent>([this](const ExplorerAddHandlerEvent &e) { addHandler(e.h, e.open, e.is_processing); });
 
-            // Returns the last selected handler of a specific type if available
-            eventBus->register_handler<GetLastSelectedOfTypeEvent>(
-                [this](const GetLastSelectedOfTypeEvent &v)
-                {
-                    if (last_selected_handler.count(v.type))
-                        v.h = last_selected_handler[v.type];
-                    else
-                        v.h = nullptr;
-                });
+            // Enable adding handlers to the explorer externally
+            eventBus->register_handler<ExplorerSelectHandlerEvent>([this](const ExplorerSelectHandlerEvent &e) { curr_handler = e.h; });
 
             // Returns all handlers of a specific type if available
             eventBus->register_handler<GetAllOfTypeEvent>(
@@ -178,8 +171,6 @@ namespace satdump
 
             if (ImGui::CollapsingHeader("Root", ImGuiTreeNodeFlags_DefaultOpen))
             {
-                auto prev_curr = curr_handler;
-
                 if (ImGui::BeginTable("##masterhandlertable", 1, ImGuiTableFlags_RowBg | ImGuiTableFlags_Borders))
                 {
                     ImGui::TableSetupColumn("##masterhandlertable_col", ImGuiTableColumnFlags_None);
@@ -226,17 +217,7 @@ namespace satdump
                     // If the handler still exist but is not in the tree, we must destroy it
                     // also destroy it in the last_of_type cache
                     if (!handler_present && curr_handler)
-                    {
-                        for (auto &v : last_selected_handler)
-                        {
-                            if (v.second == curr_handler)
-                            {
-                                v.second.reset();
-                                break;
-                            }
-                        }
                         curr_handler.reset();
-                    }
 
                     if ((!master_handler->hasSubhandlers()) && (!groups_handlers.size()))
                     {
@@ -247,9 +228,6 @@ namespace satdump
 
                     ImGui::EndTable();
                 }
-
-                if (curr_handler && prev_curr != curr_handler)
-                    last_selected_handler.insert_or_assign(curr_handler->getID(), curr_handler);
             }
 
             if (!handler_present)
@@ -407,14 +385,23 @@ namespace satdump
                     for (int p = 0, i = 0; p < tip_of_the_day.length();)
                     {
                         int cutLength = 0;
-                        for (int pp = p + 50; pp < tip_of_the_day.length(); pp++)
+
+                        for (int pp = p + std::min<int>(50, tip_of_the_day.length() - p); pp < tip_of_the_day.length(); pp++)
                         {
                             cutLength = pp;
                             if (tip_of_the_day[pp] == ' ')
                                 break;
                         }
-                        if (tip_of_the_day[p + cutLength] == '.' || tip_of_the_day[p + cutLength] == '?' || tip_of_the_day[p + cutLength] == '!')
-                            cutLength++;
+
+                        if (tip_of_the_day.size() > (p + cutLength))
+                        {
+                            if (tip_of_the_day[p + cutLength] == '.' || tip_of_the_day[p + cutLength] == '?' || tip_of_the_day[p + cutLength] == '!')
+                                cutLength++;
+                        }
+
+                        if (cutLength == 0)
+                            cutLength = tip_of_the_day.length();
+
                         std::string line = tip_of_the_day.substr(p, cutLength - p);
                         ImVec2 line_size = ImGui::CalcTextSize(line.c_str());
                         last_pos = ((float)dims.second / 2) + ((80 + i * 20) * scale);
@@ -426,6 +413,10 @@ namespace satdump
 #endif
                         p += line.size();
                         i++;
+
+                        // Avoid getting stuck in a loop, just in case
+                        if (i > 20)
+                            break;
                     }
 
                     {
@@ -479,7 +470,7 @@ namespace satdump
                         panel_ratio = left_width / explorer_size.x;
                     last_width = left_width;
 
-                    ImGui::BeginChild("ExplorerChildPanel", {left_width, float(explorer_size.y - 10)}, false);
+                    ImGui::BeginChild("ExplorerChildPanel", {left_width, float(explorer_size.y)}, false);
                     drawPanel();
                     ImGui::EndChild();
 

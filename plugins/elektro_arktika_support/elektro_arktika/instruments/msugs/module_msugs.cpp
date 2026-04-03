@@ -5,8 +5,10 @@
 #include "imgui/imgui.h"
 #include "logger.h"
 #include "products/image/channel_transform.h"
+#include "utils/binary.h"
 #include "utils/stats.h"
 #include <cstdint>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 
@@ -47,9 +49,11 @@ namespace elektro_arktika
             def::SimpleDeframer deframerIR(0x0218a7a392dd9abf, 64, 14560, 10, true);
             // def::SimpleDeframer deframerUnknown(0xa6007c, 24, 1680, 0, false);
 
-            // std::ofstream data_unknown(directory + "/data_unknown.bin", std::ios::binary);
+            std::ofstream data_unknown(directory + "/data_unknown.bin", std::ios::binary);
 
             logger->info("Demultiplexing and deframing...");
+
+            double last_val = 0;
 
             while (should_run())
             {
@@ -63,7 +67,24 @@ namespace elektro_arktika
                 {
                     std::vector<std::vector<uint8_t>> frames = deframerVIS1.work(&cadu[24], 1024 - 24);
                     for (std::vector<uint8_t> &frame : frames)
+                    {
                         vis1_reader.pushFrame(&frame[0], apply_correction);
+
+                        uint8_t vals[7];
+                        for (int i = 0; i < 7; i++)
+                            vals[6 - i] = satdump::reverseBits(frame[15200 + i]);
+                        for (int i = 0; i < 7; i++)
+                            frame[15200 + i] = vals[i];
+
+#if 0
+                        double val = (uint64_t)frame[15202] << 16 | (uint64_t)frame[15203] << 8 | (uint64_t)frame[15204];
+                        val = (val / 16777215.0) * 360;
+                        printf("%4.4f %4.4f\n", val, val - last_val);
+                        last_val = val;
+#endif
+
+                        data_unknown.write((char *)frame.data(), frame.size());
+                    }
                 }
                 else if ((vcid == 5) || (vcid_2 == 5))
                 {
