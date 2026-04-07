@@ -3,12 +3,14 @@
 #include "base/remote_handler.h"
 #include "base/remote_handler_backend.h"
 #include "common/widgets/fft_plot.h"
+#include "common/widgets/menuitem_tooltip.h"
 #include "common/widgets/waterfall_plot.h"
 #include "core/resources.h"
 #include "core/style.h"
 #include "dsp/device/dev.h"
 #include "dsp/device/options_displayer.h"
 #include "dsp/io/iq_types.h"
+#include "handlers/experimental/decoupled/fft_wat_widget/fft_waterfall.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include "utils/task_queue.h"
@@ -32,8 +34,10 @@ namespace satdump
             TaskQueue tq;
 
             volk::vector<float> fft_vec;
-            std::shared_ptr<widgets::FFTPlot> fft_plot;
-            std::shared_ptr<widgets::WaterfallPlot> waterfall_plot;
+            // std::shared_ptr<widgets::FFTPlot> fft_plot;
+            // std::shared_ptr<widgets::WaterfallPlot> waterfall_plot;
+
+            widgets::FFTWaterfallWidget wip_fft_widget;
 
             bool is_started = false;
 
@@ -61,14 +65,14 @@ namespace satdump
                     if (size != last_fft_size)
                     {
                         fft_vec.resize(size / sizeof(float));
-                        fft_plot->set_ptr(fft_vec.data());
-                        fft_plot->set_size(size / sizeof(float));
-                        waterfall_plot->set_size(size / sizeof(float));
+                        wip_fft_widget.set_fft_ptr(fft_vec.data());              //          fft_plot->set_ptr(fft_vec.data());
+                        wip_fft_widget.set_fft_size(size / sizeof(float));       //         fft_plot->set_size(size / sizeof(float));
+                        wip_fft_widget.set_waterfall_size(size / sizeof(float)); //  waterfall_plot->set_size(size / sizeof(float));
                         last_fft_size = size;
                     }
 
                     memcpy(fft_vec.data(), data, size);
-                    waterfall_plot->push_fft(fft_vec.data());
+                    wip_fft_widget.push_waterfall_fft(fft_vec.data());
                 }
                 else if (id == "rec_size" && size == sizeof(size_t))
                 {
@@ -81,37 +85,42 @@ namespace satdump
             }
 
         public:
-            RecFrontendHandler(std::shared_ptr<RemoteHandlerBackend> bkd) : RemoteHandlerHandler(bkd)
+            RecFrontendHandler(std::shared_ptr<RemoteHandlerBackend> bkd)
+                : RemoteHandlerHandler(bkd), //
+                  wip_fft_widget(65536 * 4, 2000)
             {
                 fft_vec.resize(8);
 
-                fft_plot = std::make_shared<widgets::FFTPlot>(fft_vec.data(), 8, -150, 150, 10);
-                fft_plot->frequency = 431.8e6;
-                fft_plot->enable_freq_scale = true;
+                wip_fft_widget.set_fft_ptr(fft_vec.data());
+                wip_fft_widget.set_fft_size(8);
 
-                waterfall_plot = std::make_shared<widgets::WaterfallPlot>(65536 * 4, 2000);
-                waterfall_plot->set_size(8);
-                waterfall_plot->set_rate(30, 20);
-                waterfall_plot->set_palette(colormaps::loadMap(resources::getResourcePath("waterfall/classic.json")));
+                // fft_plot = std::make_shared<widgets::FFTPlot>(fft_vec.data(), 8, -150, 150, 10);
+                // fft_plot->frequency = 431.8e6;
+                // fft_plot->enable_freq_scale = true;
+
+                //  waterfall_plot = std::make_shared<widgets::WaterfallPlot>(65536 * 4, 2000);
+                wip_fft_widget.set_waterfall_size(8);
+                wip_fft_widget.set_waterfall_rate(30, 20);
+                wip_fft_widget.set_waterfall_palette(colormaps::loadMap(resources::getResourcePath("waterfall/classic.json")));
             }
             ~RecFrontendHandler() {}
 
             void resyncFFT()
             {
-                if (fft_plot->scale_max < fft_plot->scale_min)
+                if (wip_fft_widget.fft_scale_max < wip_fft_widget.fft_scale_min)
                 {
-                    fft_plot->scale_min = waterfall_plot->scale_min;
-                    fft_plot->scale_max = waterfall_plot->scale_max;
+                    wip_fft_widget.fft_scale_min = wip_fft_widget.waterfall_scale_min;
+                    wip_fft_widget.fft_scale_max = wip_fft_widget.waterfall_scale_max;
                 }
-                else if (fft_plot->scale_min > fft_plot->scale_max)
+                else if (wip_fft_widget.fft_scale_min > wip_fft_widget.fft_scale_max)
                 {
-                    fft_plot->scale_min = waterfall_plot->scale_min;
-                    fft_plot->scale_max = waterfall_plot->scale_max;
+                    wip_fft_widget.fft_scale_min = wip_fft_widget.waterfall_scale_min;
+                    wip_fft_widget.fft_scale_max = wip_fft_widget.waterfall_scale_max;
                 }
                 else
                 {
-                    waterfall_plot->scale_min = fft_plot->scale_min;
-                    waterfall_plot->scale_max = fft_plot->scale_max;
+                    wip_fft_widget.waterfall_scale_min = wip_fft_widget.fft_scale_min;
+                    wip_fft_widget.waterfall_scale_max = wip_fft_widget.fft_scale_max;
                 }
             }
 
@@ -151,13 +160,14 @@ namespace satdump
 
                 if (ImGui::CollapsingHeader("Source", ImGuiTreeNodeFlags_DefaultOpen))
                 {
+#if 0
                     if (is_started)
                         style::beginDisabled();
-                    if (ImGui::BeginCombo("Device##devicebox", current_device.name.c_str()))
+                    if (ImGui::BeginCombo("##devicebox", current_device.name.c_str()))
                     {
                         for (auto &d : available_devices)
                         {
-                            if (ImGui::Selectable(d.name.c_str(), d == current_device))
+                            if (ImGui::Selectable(d.name.c_str(), d.name == current_device.name))
                             {
                                 tq.push(
                                     [this, d]()
@@ -175,6 +185,8 @@ namespace satdump
                         ImGui::EndCombo();
                     }
 
+                    ImGui::SameLine();
+
                     if (ImGui::Button("Refresh"))
                     {
                         tq.push(
@@ -186,6 +198,9 @@ namespace satdump
                     }
                     if (is_started)
                         style::endDisabled();
+
+                    ImGui::Separator();
+#endif
 
                     nlohmann::json changed = dev_opt_disp.draw();
 
@@ -204,39 +219,12 @@ namespace satdump
                                 }
                             });
                     }
-
-                    if (!is_started)
-                    {
-                        if (ImGui::Button("Start"))
-                        {
-                            tq.push(
-                                [this]()
-                                {
-                                    std::scoped_lock l(fm);
-                                    bkd->set_cfg("started", true);
-                                });
-                        }
-                    }
-                    else
-                    {
-                        if (ImGui::Button("Stop"))
-                        {
-                            tq.push(
-                                [this]()
-                                {
-                                    std::scoped_lock l(fm);
-                                    bkd->set_cfg("started", false);
-                                });
-                        }
-                    }
-
-                    ImGui::ProgressBar(buffer_usage);
                 }
 
                 if (ImGui::CollapsingHeader("FFT", ImGuiTreeNodeFlags_DefaultOpen))
                 {
-                    widgets::SteppedSliderFloat("FFT Max", &fft_plot->scale_max, -160, 150);
-                    widgets::SteppedSliderFloat("FFT Min", &fft_plot->scale_min, -160, 150);
+                    widgets::SteppedSliderFloat("FFT Max", &wip_fft_widget.fft_scale_max, -160, 150);
+                    widgets::SteppedSliderFloat("FFT Min", &wip_fft_widget.fft_scale_min, -160, 150);
 
                     resyncFFT();
 
@@ -322,40 +310,153 @@ namespace satdump
                 float wf_size = win_size.y;
                 bool show_waterfall = true;
                 float waterfall_ratio = 0.3;
-                float left_width = ImGui::GetCursorPosX() - 9;
 
                 ImGui::BeginChild("RecorderFFT", {right_width, wf_size}, false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
                 {
+#if 1
+                    wip_fft_widget.draw({right_width, wf_size}, true);
+#else
                     float fft_height = wf_size * (show_waterfall ? waterfall_ratio : 1.0);
                     float wf_height = wf_size * (1 - waterfall_ratio) + 15 * ui_scale;
-                    float wfft_widht = right_width - 9 * ui_scale;
-                    bool t = true;
-#ifdef __ANDROID__
-                    int offset = 8;
-#else
-                    int offset = 30;
-#endif
-                    ImGui::SetNextWindowSizeConstraints(ImVec2((right_width + offset * ui_scale), 50), ImVec2((right_width + offset * ui_scale), wf_size));
-                    ImGui::SetNextWindowSize(ImVec2((right_width + offset * ui_scale), show_waterfall ? waterfall_ratio * wf_size : wf_size));
-                    ImGui::SetNextWindowPos(ImVec2(left_width, 25 * ui_scale));
-                    if (ImGui::Begin("#fft", &t,
-                                     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_NoScrollbar |
-                                         ImGuiWindowFlags_NoScrollWithMouse))
+                    float wfft_widht = right_width; // - 9 * ui_scale;
+
+                    fft_plot->draw({float(wfft_widht), fft_height});
+                    if (show_waterfall && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+                        waterfall_ratio = ImGui::GetWindowHeight() / wf_size;
+
                     {
-                        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 9 * ui_scale);
-                        fft_plot->draw({float(wfft_widht), fft_height});
-                        if (show_waterfall && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-                            waterfall_ratio = ImGui::GetWindowHeight() / wf_size;
+                        ImGui::GetWindowDrawList()->AddRectFilled(                                            //
+                            {ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y},                   //
+                            {ImGui::GetCursorScreenPos().x + wfft_widht, ImGui::GetCursorScreenPos().y + 20}, //
+                            /*ImColor(ImGui::GetStyle().Colors[ImGuiCol_Button])*/ ImColor(0, 0, 0));
+
+                        // ImGui::GetWindowDrawList()->AddRectFilled(                                            //
+                        //     {ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + 19},              //
+                        //     {ImGui::GetCursorScreenPos().x + wfft_widht, ImGui::GetCursorScreenPos().y + 20}, //
+                        //     /*ImColor(ImGui::GetStyle().Colors[ImGuiCol_Button])*/ ImColor(255, 255, 255));
+
+                        // ImGui::SetWindowFontScale(0.8);
+
+                        // Start
+                        {
+
+                            std::string cfreq = " " + (std::string) "95 MHz";
+                            auto size = ImGui::CalcTextSize(cfreq.c_str());
+                            ImGui::GetWindowDrawList()->AddText({ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y + (20.f - size.y) / 2.f},
+                                                                ImColor(ImGui::GetStyle().Colors[ImGuiCol_Text]), cfreq.c_str());
+                        }
+
+                        // Start - Center
+                        {
+
+                            std::string cfreq = " " + (std::string) "96.5 MHz";
+                            auto size = ImGui::CalcTextSize(cfreq.c_str());
+                            ImGui::GetWindowDrawList()->AddText({ImGui::GetCursorScreenPos().x + (wfft_widht / 4) - (size.x / 2), ImGui::GetCursorScreenPos().y + (20.f - size.y) / 2.f},
+                                                                ImColor(ImGui::GetStyle().Colors[ImGuiCol_Text]), cfreq.c_str());
+                        }
+
+                        // Center
+                        {
+                            std::string cfreq = "98 MHz";
+                            auto size = ImGui::CalcTextSize(cfreq.c_str());
+                            ImGui::GetWindowDrawList()->AddText({ImGui::GetCursorScreenPos().x + (wfft_widht / 2) - (size.x / 2), ImGui::GetCursorScreenPos().y + (20.f - size.y) / 2.f},
+                                                                ImColor(ImGui::GetStyle().Colors[ImGuiCol_Text]), cfreq.c_str());
+                        }
+
+                        // Center - End
+                        {
+
+                            std::string cfreq = " " + (std::string) "99.5 MHz";
+                            auto size = ImGui::CalcTextSize(cfreq.c_str());
+                            ImGui::GetWindowDrawList()->AddText({ImGui::GetCursorScreenPos().x + (wfft_widht / 4) * 3 - (size.x / 2), ImGui::GetCursorScreenPos().y + (20.f - size.y) / 2.f},
+                                                                ImColor(ImGui::GetStyle().Colors[ImGuiCol_Text]), cfreq.c_str());
+                        }
+
+                        // End
+                        {
+                            std::string cfreq = (std::string) "101 MHz" + " ";
+                            auto size = ImGui::CalcTextSize(cfreq.c_str());
+                            ImGui::GetWindowDrawList()->AddText({ImGui::GetCursorScreenPos().x + wfft_widht - size.x, ImGui::GetCursorScreenPos().y + (20.f - size.y) / 2.f},
+                                                                ImColor(ImGui::GetStyle().Colors[ImGuiCol_Text]), cfreq.c_str());
+                        }
+
+                        // ImGui::SetWindowFontScale(1);
+
+                        ImGui::Dummy({wfft_widht, 20});
                     }
-                    ImGui::EndChild();
+
                     if (show_waterfall)
                     {
-                        ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 15 * ui_scale);
-                        ImGui::SetCursorPosX(9 * ui_scale);
                         waterfall_plot->draw({wfft_widht, wf_height}, true);
                     }
+#endif
                 }
                 ImGui::EndChild();
+            }
+
+            void drawMenuBar()
+            {
+                if (ImGui::BeginMenu("D", !is_started))
+                {
+                    for (auto &d : available_devices)
+                    {
+                        if (ImGui::MenuItem(d.name.c_str(), NULL, d.name == current_device.name))
+                        {
+                            tq.push(
+                                [this, d]()
+                                {
+                                    std::scoped_lock l(fm);
+                                    bkd->set_cfg("current_device", (nlohmann::json)d);
+
+                                    dev_opt_disp.clear();
+                                    dev_opt_disp.add_options(bkd->get_cfg("dev/list"));
+                                    dev_opt_disp.set_values(bkd->get_cfg("dev/cfg"));
+                                });
+                        }
+                    }
+
+                    ImGui::Separator();
+
+                    if (ImGui::MenuItem("Refresh"))
+                    {
+                        tq.push(
+                            [this]()
+                            {
+                                std::scoped_lock l(fm);
+                                bkd->set_cfg("refresh", true);
+                            });
+                    }
+
+                    ImGui::EndMenu();
+                }
+
+                if (!is_started)
+                {
+                    if (widgets::MenuItemTooltip(u8"\uf909", "Start source"))
+                    {
+                        tq.push(
+                            [this]()
+                            {
+                                std::scoped_lock l(fm);
+                                bkd->set_cfg("started", true);
+                            });
+                    }
+                }
+                else
+                {
+                    if (widgets::MenuItemTooltip(u8"\ufc62", "Stop source"))
+                    {
+                        tq.push(
+                            [this]()
+                            {
+                                std::scoped_lock l(fm);
+                                bkd->set_cfg("started", false);
+                            });
+                    }
+                }
+
+                ImGui::Spacing();
+                ImGui::ProgressBar(buffer_usage);
             }
 
             std::string getName() { return "RemoteHandleTest"; }
