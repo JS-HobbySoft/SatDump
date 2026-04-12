@@ -8,6 +8,21 @@ namespace satdump
 {
     namespace widgets
     {
+        struct VFO
+        {
+            double f;
+            double b;
+            bool l = 1, u = 1;
+
+            bool is_dragging = false;
+            bool is_resizing = false;
+        };
+
+        std::vector<VFO> vfo_freqs = {{100.5e6, 100e3}, {98e6, 500e3, 0, 1}, {99.8e6, -1}};
+
+        bool is_dragging_vfo = false;
+        bool is_resizing_vfo = false;
+
         void FFTWaterfallWidget::draw_fft(ImVec2 pos, ImVec2 size)
         {
             std::scoped_lock l(fft_values_mtx);
@@ -28,11 +43,20 @@ namespace satdump
             // Background
             ImGui::RenderFrame(frame_bb.Min, frame_bb.Max, ImColor(0, 0, 0), true, style.FrameRounding);
 
-            // Draw lines
+            // Draw dB scale
             float vscale = ((fft_scale_max - fft_scale_min) / fft_scale_resolution);
             float step = (frame_bb.Max.y - frame_bb.Min.y) / fft_scale_resolution;
             float value = fft_scale_min;
-            for (float i = frame_bb.Max.y - step; i >= frame_bb.Min.y; i -= step)
+            float dbfontscale = step / ImGui::GetFontSize();
+            if (dbfontscale < 1)
+                ImGui::SetWindowFontScale(step / ImGui::GetFontSize());
+            while (dbfontscale >= 2.0f)
+            {
+                dbfontscale /= 2.0f;
+                step /= 2.0f;
+                vscale /= 2.0f;
+            }
+            for (float i = frame_bb.Max.y - step; i >= (frame_bb.Min.y - 1); i -= step)
             {
                 ImVec2 pos0 = {frame_bb.Min.x, i};
                 ImVec2 pos1 = {frame_bb.Max.x, i};
@@ -40,6 +64,7 @@ namespace satdump
                 value += vscale;
                 ImGui::GetWindowDrawList()->AddText({pos0.x, pos0.y + 2}, style::theme.fft_graduations, std::string(std::to_string(int(value)) + " dB").c_str());
             }
+            ImGui::SetWindowFontScale(1);
 
             // Draw lines
             double fz = (double)fft_values_size / (double)res_w;
@@ -70,12 +95,85 @@ namespace satdump
                 tp0 = tp1;
             }
 
-            std::vector<double> vfo_freqs = {100.5e6, 98e6};
-
+            // VFOs
             for (auto &vfo : vfo_freqs)
             {
-                float pos_x = pos.x + ((vfo - (frequency - bandwidth / 2.0)) / bandwidth) * size.x;
+                float pos_x = pos.x + ((vfo.f - (frequency - bandwidth / 2.0)) / bandwidth) * size.x;
+                float pos_x1 = pos_x, pos_x2 = pos_x;
+
+                if (vfo.b != -1)
+                {
+                    if (vfo.l)
+                        pos_x1 = pos.x + (((vfo.f - (vfo.b / 2)) - (frequency - bandwidth / 2.0)) / bandwidth) * size.x;
+                    if (vfo.u)
+                        pos_x2 = pos.x + (((vfo.f + (vfo.b / 2)) - (frequency - bandwidth / 2.0)) / bandwidth) * size.x;
+
+                    if (vfo.l)
+                        ImGui::GetWindowDrawList()->AddRectFilled({pos_x, pos.y}, {pos_x1, pos.y + size.y}, ImColor(255, 255, 255, 100));
+                    if (vfo.u)
+                        ImGui::GetWindowDrawList()->AddRectFilled({pos_x, pos.y}, {pos_x2, pos.y + size.y}, ImColor(255, 255, 255, 100));
+                }
+                else
+                {
+                    pos_x1 = pos_x - 0.025 * size.x;
+                    pos_x2 = pos_x + 0.025 * size.x;
+                    ImGui::GetWindowDrawList()->AddRectFilledMultiColor({pos_x, pos.y}, {pos_x1, pos.y + size.y},               //
+                                                                        ImColor(255, 255, 255, 100), ImColor(255, 255, 255, 0), //
+                                                                        ImColor(255, 255, 255, 0), ImColor(255, 255, 255, 100));
+                    ImGui::GetWindowDrawList()->AddRectFilledMultiColor({pos_x, pos.y}, {pos_x2, pos.y + size.y},               //
+                                                                        ImColor(255, 255, 255, 100), ImColor(255, 255, 255, 0), //
+                                                                        ImColor(255, 255, 255, 0), ImColor(255, 255, 255, 100));
+                }
+
+                // Center red line
                 ImGui::GetWindowDrawList()->AddLine({pos_x, pos.y}, {pos_x, pos.y + size.y}, ImColor(255, 0, 0));
+
+                if (allow_user_interactions)
+                {
+                    // Resizing logic, bandwidth
+                    if (!vfo.is_dragging && !is_dragging_vfo && vfo.b != -1)
+                    {
+                        if ((vfo.l && ImGui::IsMouseHoveringRect({pos_x1 - 5 * ui_scale, pos.y}, //
+                                                                 {pos_x1 + 5 * ui_scale, pos.y + size.y})) ||
+                            (vfo.u && ImGui::IsMouseHoveringRect({pos_x2 - 5 * ui_scale, pos.y}, //
+                                                                 {pos_x2 + 5 * ui_scale, pos.y + size.y})))
+                        {
+                            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+
+                            if (!is_resizing_vfo && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+                                is_resizing_vfo = vfo.is_resizing = true;
+                        }
+
+                        if (vfo.is_resizing)
+                        {
+                            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+                                vfo.b = fabs(vfo.f - ((((ImGui::GetMousePos().x - pos.x) / size.x) * bandwidth) + (frequency - bandwidth / 2.0))) * 2;
+                            else
+                                is_resizing_vfo = vfo.is_resizing = false;
+                        }
+                    }
+
+                    // Dragging logic, frequency
+                    if (!vfo.is_resizing && !is_resizing_vfo)
+                    {
+                        if (ImGui::IsMouseHoveringRect({std::min<float>(pos_x1 + 5 * ui_scale, pos_x - 5 * ui_scale), pos.y}, //
+                                                       {std::max<float>(pos_x2 - 5 * ui_scale, pos_x + 5 * ui_scale), pos.y + size.y}))
+                        {
+                            ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+
+                            if (!is_dragging_vfo && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+                                is_dragging_vfo = vfo.is_dragging = true;
+                        }
+
+                        if (vfo.is_dragging)
+                        {
+                            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+                                vfo.f = (((ImGui::GetMousePos().x - pos.x) / size.x) * bandwidth) + (frequency - bandwidth / 2.0);
+                            else
+                                is_dragging_vfo = vfo.is_dragging = false;
+                        }
+                    }
+                }
             }
         }
     } // namespace widgets
