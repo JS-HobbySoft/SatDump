@@ -240,14 +240,34 @@ namespace satdump
                     else
                         output_fifo->write((uint8_t *)sym_buffer, is_bpsk ? dat_size : dat_size * 2);
 
+                    std::stringstream ss;
+                    ss << std::fixed << std::setprecision(0) << freq_for_info_log;
+                    std::string freq_for_log = ss.str();
+            
+                    std::string snr_pad;
+                    std::string peaksnr_pad;
+
+                    if (std::to_string(snr).length() == 8)
+                        snr_pad = " " + std::to_string(snr);
+                    else
+                        snr_pad = std::to_string(snr);
+
+                    if (std::to_string(peak_snr).length() == 8)
+                        peaksnr_pad = " " + std::to_string(peak_snr);
+                    else
+                        peaksnr_pad = std::to_string(peak_snr);
+
                     if (input_data_type == DATA_FILE)
                         progress = file_source->getPosition();
                     if (time(NULL) % 10 == 0 && lastTime != time(NULL))
                     {
                         lastTime = time(NULL);
-                        logger->info("Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, SNR : " + std::to_string(snr) + "dB," +
-                                     " Peak SNR: " + std::to_string(peak_snr) + "dB");
+                        if (filesize == 0)
+                            logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log +  ", SNR: " + snr_pad + "dB," + " Peak SNR: " + peaksnr_pad + "dB");
+                        else
+                            logger->info("VFO: " + name_for_info_log + " Freq: " + freq_for_log + " Progress " + std::to_string(round(((double)progress / (double)filesize) * 1000.0) / 10.0) + "%%, SNR : " + std::to_string(snr) + "dB," + " Peak SNR: " + std::to_string(peak_snr) + "dB");
                     }
+
                 }
 
                 logger->info("Demodulation finished");
