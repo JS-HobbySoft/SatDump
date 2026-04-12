@@ -59,7 +59,7 @@ namespace satdump
 
                 if (time(0) - time_)
                 {
-                    logger->trace(getModuleStats().dump(4));
+//                    logger->trace(getModuleStats().dump(4));
                     time_ = time(0);
                 }
             }
