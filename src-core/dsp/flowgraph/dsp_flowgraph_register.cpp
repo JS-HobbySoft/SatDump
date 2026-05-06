@@ -25,24 +25,29 @@
 #include "dsp/conv/uchar_to_float.h"
 #include "dsp/ddc/ddc.h"
 #include "dsp/digital/binary_slicer.h"
+#include "dsp/digital/bit_to_float.h"
 #include "dsp/digital/cadu_deframer.h"
 #include "dsp/digital/cadu_derand.h"
 #include "dsp/digital/differential_decoder.h"
+#include "dsp/digital/unpack_bits.h"
 #include "dsp/displays/const_disp.h"
 #include "dsp/displays/hist_disp.h"
 #include "dsp/fft/fft_pan.h"
+#include "dsp/filter/decimating_fir.h"
 #include "dsp/filter/fft.h"
 #include "dsp/filter/fir.h"
 #include "dsp/filter/rrc.h"
 #include "dsp/flowgraph/flowgraph.h"
 #include "dsp/flowgraph/node_int.h"
 #include "dsp/hier/audio_demod.h"
+#include "dsp/hier/gfsk_mod.h"
 #include "dsp/hier/psk_demod.h"
 #include "dsp/io/file_sink.h"
 #include "dsp/io/file_source.h"
 #include "dsp/io/iq_sink.h"
 #include "dsp/io/iq_source.h"
 #include "dsp/io/nng_sink.h"
+#include "dsp/io/udp_source.h"
 #include "dsp/io/waveform.h"
 #include "dsp/path/selector.h"
 #include "dsp/path/splitter.h"
@@ -62,12 +67,15 @@
 #include "dsp/utils/multiply.h"
 #include "dsp/utils/psk_snr_estimator.h"
 #include "dsp/utils/quadrature_demod.h"
+#include "dsp/utils/repeat.h"
+#include "dsp/utils/reshape_buffer.h"
 #include "dsp/utils/samplerate_meter.h"
 #include "dsp/utils/subtract.h"
 #include "dsp/utils/throttle.h"
 #include "dsp/utils/vco.h"
 
 #include "common/widgets/fft_plot.h"
+#include "dsp/utils/zero_fill.h"
 #include "imgui/imgui.h"
 
 namespace satdump
@@ -266,6 +274,10 @@ namespace satdump
                 registerNodeSimple<ndsp::FIRBlock<float>>(flowgraph, "Filter/FIR FFF");
                 registerNodeSimple<ndsp::FIRBlock<complex_t, complex_t>>(flowgraph, "Filter/FIR CCC");
 
+                registerNodeSimple<ndsp::DecimatingFIRBlock<complex_t>>(flowgraph, "Filter/Decimating FIR CCF");
+                registerNodeSimple<ndsp::DecimatingFIRBlock<float>>(flowgraph, "Filter/Decimating FIR FFF");
+                registerNodeSimple<ndsp::DecimatingFIRBlock<complex_t, complex_t>>(flowgraph, "Filter/Decimating FIR CCC");
+
                 registerNodeSimple<ndsp::FFTFilterBlock<complex_t>>(flowgraph, "Filter/FFT CCF");
                 // registerNodeSimple<ndsp::FIRBlock<float>>(flowgraph, "Filter/FFT FFF");
                 registerNodeSimple<ndsp::FFTFilterBlock<complex_t, complex_t>>(flowgraph, "Filter/FFT CCC");
@@ -284,6 +296,7 @@ namespace satdump
                 registerNodeSimple<ndsp::QuadratureDemodBlock>(flowgraph, "Utils/Quadrature Demod");
                 registerNodeSimple<ndsp::HilbertBlock>(flowgraph, "Utils/Hilbert Transform");
                 registerNodeSimple<ndsp::VCOBlock>(flowgraph, "Utils/VCO");
+                registerNodeSimple<ndsp::VCOBlockDeviation>(flowgraph, "Utils/VCO Dev");
 
                 registerNodeSimple<ndsp::SplitterBlock<complex_t>>(flowgraph, "Utils/Splitter CC");
                 registerNodeSimple<ndsp::SplitterBlock<float>>(flowgraph, "Utils/Splitter FF");
@@ -348,6 +361,22 @@ namespace satdump
                 registerNodeSimple<ndsp::DifferentialDecoderBlock>(flowgraph, "Digital/Differential Decoder");
                 registerNodeSimple<ndsp::CADUDeframerBlock>(flowgraph, "Digital/CADU Deframer");
                 registerNodeSimple<ndsp::CADUDerandBlock>(flowgraph, "Digital/CADU Derand");
+
+                registerNodeSimple<ndsp::GFSKModHierBlock>(flowgraph, "Mod/GFSK Mod");
+                registerNodeSimple<ndsp::BitToFloatBlock>(flowgraph, "Utils/Bit To Float");
+                registerNodeSimple<ndsp::UnpackBitsBlock>(flowgraph, "Utils/Unpack Bits");
+                registerNodeSimple<ndsp::RepeatBlock<float>>(flowgraph, "Utils/Repeat FF");
+
+                registerNodeSimple<ndsp::ZeroFillBlock<float>>(flowgraph, "Utils/Zero Fill FF");
+                registerNodeSimple<ndsp::ZeroFillBlock<complex_t>>(flowgraph, "Utils/Zero Fill CC");
+
+                registerNodeSimple<ndsp::ReshapeBufferBlock<complex_t>>(flowgraph, "Utils/Reshape Buffer CC");
+
+                registerNodeSimple<ndsp::UDPSourceBlock<complex_t>>(flowgraph, "IO/UDP Source C");
+                registerNodeSimple<ndsp::UDPSourceBlock<float>>(flowgraph, "IO/UDP Source F");
+                registerNodeSimple<ndsp::UDPSourceBlock<int16_t>>(flowgraph, "IO/UDP Source S");
+                registerNodeSimple<ndsp::UDPSourceBlock<int8_t>>(flowgraph, "IO/UDP Source H");
+                registerNodeSimple<ndsp::UDPSourceBlock<uint8_t>>(flowgraph, "IO/UDP Source B");
 
                 eventBus->fire_event<RegisterNodesEvent>({flowgraph.node_internal_registry});
 
