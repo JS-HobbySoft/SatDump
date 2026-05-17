@@ -7,9 +7,11 @@
 
 #include "core/resources.h"
 #include "dsp/agc/agc.h"
+#include "dsp/agc/agc_bias.h"
 #include "dsp/agc/agc_fast.h"
 #include "dsp/clock_recovery/clock_recovery_mm.h"
 #include "dsp/clock_recovery/clock_recovery_mm_fast.h"
+#include "dsp/clock_recovery/simple_zc_recovery.h"
 #include "dsp/conv/char_to_float.h"
 #include "dsp/conv/complex_to_float.h"
 #include "dsp/conv/complex_to_ifloat.h"
@@ -26,16 +28,19 @@
 #include "dsp/ddc/ddc.h"
 #include "dsp/digital/binary_slicer.h"
 #include "dsp/digital/bit_to_float.h"
+#include "dsp/digital/bits_repack.h"
 #include "dsp/digital/cadu_deframer.h"
 #include "dsp/digital/cadu_derand.h"
 #include "dsp/digital/differential_decoder.h"
 #include "dsp/digital/unpack_bits.h"
 #include "dsp/displays/const_disp.h"
 #include "dsp/displays/hist_disp.h"
+#include "dsp/displays/time_disp.h"
 #include "dsp/fft/fft_pan.h"
 #include "dsp/filter/decimating_fir.h"
 #include "dsp/filter/fft.h"
 #include "dsp/filter/fir.h"
+#include "dsp/filter/lpf.h"
 #include "dsp/filter/rrc.h"
 #include "dsp/flowgraph/flowgraph.h"
 #include "dsp/flowgraph/node_int.h"
@@ -65,6 +70,7 @@
 #include "dsp/utils/freq_shift.h"
 #include "dsp/utils/hilbert.h"
 #include "dsp/utils/multiply.h"
+#include "dsp/utils/multiply_const.h"
 #include "dsp/utils/psk_snr_estimator.h"
 #include "dsp/utils/quadrature_demod.h"
 #include "dsp/utils/repeat.h"
@@ -229,6 +235,19 @@ namespace satdump
                 }
             };
 
+            class NodeTestTime : public NodeInternal
+            {
+            public:
+                NodeTestTime(const Flowgraph *f) : NodeInternal(f, std::make_shared<ndsp::TimeDisplayBlock>()) {}
+
+                virtual bool render()
+                {
+                    NodeInternal::render();
+                    ((ndsp::TimeDisplayBlock *)blk.get())->draw({800, 400});
+                    return false;
+                }
+            };
+
             void registerNodesInFlowgraph(Flowgraph &flowgraph)
             {
                 registerNode<NodeTestIQSource>(flowgraph, "IO/IQ Source");
@@ -241,6 +260,9 @@ namespace satdump
                 registerNode<NodeTestFFT>(flowgraph, "FFT/FFT Pan");
                 registerNode<NodeTestConst>(flowgraph, "View/Constellation Display");
                 registerNode<NodeTestHisto>(flowgraph, "View/Histogram Display");
+                registerNode<NodeTestTime>(flowgraph, "View/Time Display");
+
+                registerNodeSimple<ndsp::AGCBiasBlock>(flowgraph, "AGC/Agc Bias");
 
                 registerNodeSimple<ndsp::AGCBlock<complex_t>>(flowgraph, "AGC/Agc CC");
                 registerNodeSimple<ndsp::AGCBlock<float>>(flowgraph, "AGC/Agc FF");
@@ -251,6 +273,9 @@ namespace satdump
                 registerNodeSimple<ndsp::MultiplyBlock<float>>(flowgraph, "Utils/Multiply FF");
                 registerNodeSimple<ndsp::MultiplyBlock<complex_t>>(flowgraph, "Utils/Multiply CC");
 
+                registerNodeSimple<ndsp::MultiplyConstBlock<float>>(flowgraph, "Utils/Multiply Const FF");
+                registerNodeSimple<ndsp::MultiplyConstBlock<complex_t>>(flowgraph, "Utils/Multiply Const CC");
+
                 registerNodeSimple<ndsp::SubtractBlock<float>>(flowgraph, "Utils/Subtract FF");
                 registerNodeSimple<ndsp::SubtractBlock<complex_t>>(flowgraph, "Utils/Subtract CC");
 
@@ -260,6 +285,8 @@ namespace satdump
                 registerNodeSimple<ndsp::CostasBlock>(flowgraph, "PLL/Costas Loop");
                 registerNodeSimple<ndsp::CostasFastBlock>(flowgraph, "PLL/Costas Loop Fast");
                 registerNodeSimple<ndsp::PLLCarrierTrackingBlock>(flowgraph, "PLL/PLL Carrier Tracking");
+
+                registerNodeSimple<ndsp::SimpleZeroCrossingRecoveryBlock>(flowgraph, "Timing/Simple Zero-Crossing Clock Recovery FF");
 
                 registerNodeSimple<ndsp::MMClockRecoveryBlock<complex_t>>(flowgraph, "Timing/Clock Recovery MM CC");
                 registerNodeSimple<ndsp::MMClockRecoveryBlock<float>>(flowgraph, "Timing/Clock Recovery MM FF");
@@ -284,6 +311,9 @@ namespace satdump
 
                 registerNodeSimple<ndsp::RRC_Block<FIRBlock<complex_t>>>(flowgraph, "Filter/RRC FIR CC");
                 registerNodeSimple<ndsp::RRC_Block<FFTFilterBlock<complex_t>>>(flowgraph, "Filter/RRC FFT CC");
+
+                registerNodeSimple<ndsp::LPF_Block<FIRBlock<complex_t>>>(flowgraph, "Filter/LPF FIR CC");
+                registerNodeSimple<ndsp::LPF_Block<FIRBlock<float>>>(flowgraph, "Filter/LPF FIR FF");
 
                 registerNodeSimple<ndsp::CyclostationaryAnalysis>(flowgraph, "Utils/Cyclostationary Analysis");
 
@@ -366,6 +396,7 @@ namespace satdump
                 registerNodeSimple<ndsp::BitToFloatBlock>(flowgraph, "Utils/Bit To Float");
                 registerNodeSimple<ndsp::UnpackBitsBlock>(flowgraph, "Utils/Unpack Bits");
                 registerNodeSimple<ndsp::RepeatBlock<float>>(flowgraph, "Utils/Repeat FF");
+                registerNodeSimple<ndsp::RepeatBlock<complex_t>>(flowgraph, "Utils/Repeat CC");
 
                 registerNodeSimple<ndsp::ZeroFillBlock<float>>(flowgraph, "Utils/Zero Fill FF");
                 registerNodeSimple<ndsp::ZeroFillBlock<complex_t>>(flowgraph, "Utils/Zero Fill CC");
@@ -377,6 +408,7 @@ namespace satdump
                 registerNodeSimple<ndsp::UDPSourceBlock<int16_t>>(flowgraph, "IO/UDP Source S");
                 registerNodeSimple<ndsp::UDPSourceBlock<int8_t>>(flowgraph, "IO/UDP Source H");
                 registerNodeSimple<ndsp::UDPSourceBlock<uint8_t>>(flowgraph, "IO/UDP Source B");
+                registerNodeSimple<ndsp::BitsRepackBlock>(flowgraph, "Digital/Bits Repack");
 
                 eventBus->fire_event<RegisterNodesEvent>({flowgraph.node_internal_registry});
 
