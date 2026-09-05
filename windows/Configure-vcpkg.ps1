@@ -61,12 +61,12 @@ if($env:PROCESSOR_ARCHITECTURE -ne $arch)
 #Setup vcpkg
 Write-Output "Configuring vcpkg..."
 cd "$(Split-Path -Parent $MyInvocation.MyCommand.Path)\.."
-git clone https://github.com/microsoft/vcpkg -b 2025.01.13
+git clone https://github.com/microsoft/vcpkg -b 2026.07.29
 cd vcpkg
 .\bootstrap-vcpkg.bat
 
 # Core packages. libxml2 is for libiio
-.\vcpkg install --triplet $platform pthreads libjpeg-turbo tiff libpng glfw3 libusb fftw3 libxml2 portaudio nng zstd armadillo opencl curl[schannel] hdf5[cpp] sqlite3
+.\vcpkg install --triplet $platform pthreads libjpeg-turbo tiff libpng glfw3 libusb fftw3 libxml2 portaudio nng zstd armadillo opencl curl[ssl] hdf5[cpp] sqlite3
 
 # Entirely for UHD...
 .\vcpkg install --triplet $platform boost-chrono boost-date-time boost-filesystem boost-program-options boost-system boost-serialization boost-thread `
@@ -272,7 +272,7 @@ git clone https://github.com/EttusResearch/uhd # v4.8 (latest as of this writing
 cd uhd\host
 $null = mkdir build
 cd build
-cmake $build_args -DENABLE_MAN_PAGES=OFF -DENABLE_MANUAL=OFF -DENABLE_PYTHON_API=OFF -DENABLE_EXAMPLES=OFF -DENABLE_UTILS=OFF -DENABLE_TESTS=OFF -DPYTHON_EXECUTABLE="$((Get-Command python3).Source)" ..
+cmake $build_args -DENABLE_MAN_PAGES=OFF -DENABLE_MANUAL=OFF -DENABLE_PYTHON_API=OFF -DENABLE_EXAMPLES=OFF -DENABLE_UTILS=OFF -DENABLE_TESTS=OFF -DPYTHON_EXECUTABLE="$((Get-Command python).Source)" ..
 cmake --build . --config Release
 cmake --install .
 cd ..\..\..

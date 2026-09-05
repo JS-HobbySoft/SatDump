@@ -1,4 +1,5 @@
 #include "i18n.h"
+#include "init.h"
 #include "libs/base64/base64.h"
 #include "utils/time.h"
 #include <string>
@@ -68,11 +69,13 @@ namespace satdump
                 explorer_app->tryOpenSomethingInExplorer(
                     [](explorer::ExplorerApplication *)
                     {
-                        logger->warn("Adding Recorder!");
+                        logger->notice("Adding Recorder!");
                         eventBus->fire_event<explorer::ExplorerAddHandlerEvent>({std::make_shared<RecorderApplication>(), true}); // TODOREWORK do not bind this directly.
                     });
             });
         eventBus->register_handler<TryOpenFileInMainExplorerEvent>([](TryOpenFileInMainExplorerEvent e) { explorer_app->tryOpenFileInExplorer(e.path); });
+
+        eventBus->register_handler<StyleOrUINeedUpdateEvent>([&](auto e) { update_ui = true; });
 
         // Load credits MD
         std::ifstream ifs(resources::getResourcePath("credits.md"));

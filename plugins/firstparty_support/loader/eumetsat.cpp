@@ -85,6 +85,13 @@ namespace satdump
             false,
         },
         {
+            "MetOp-SG METimage",
+            "EO%3AEUM%3ADAT%3A0464",
+            true,
+            true,
+            false,
+        },
+        {
             "AWS MWR",
             "EO%3AEUM%3ADAT%3A0905",
             true,
@@ -167,7 +174,7 @@ namespace satdump
         }
         catch (std::exception &e)
         {
-            logger->error("Error updating product list! %s", e.what());
+            logger->error(_("Error updating product list! %s"), e.what());
         }
     }
 
@@ -205,7 +212,7 @@ namespace satdump
         ImGui::SameLine();
         request_time.draw();
         ImGui::SameLine();
-        if (ImGui::Button("Current##archiveloader_setcurrenttime"))
+        if (ImGui::Button(_("Current##archiveloader_setcurrenttime")))
             request_time.set(time(0));
 
         float target_height = wsize.y - 260 * ui_scale;
