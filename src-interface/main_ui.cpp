@@ -1,9 +1,10 @@
+#define SATDUMP_DLL_EXPORT2 1
+
 #include "i18n.h"
 #include "init.h"
 #include "libs/base64/base64.h"
 #include "utils/time.h"
 #include <string>
-#define SATDUMP_DLL_EXPORT2 1
 
 #include "explorer/explorer.h"
 
@@ -205,6 +206,12 @@ namespace satdump
                         if (ImGui::MenuItem("ImPlot3D Demo", NULL, show_implot3d_demo))
                             show_implot3d_demo = !show_implot3d_demo;
                         ImGui::EndMenu();
+                    }
+
+                    if (ImGui::MenuItem("Crash Now"))
+                    {
+                        int *ptr = 0;
+                        *ptr = 9999;
                     }
 
                     ImGui::EndMenu();

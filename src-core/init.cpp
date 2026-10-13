@@ -1,5 +1,7 @@
-#include "core/style.h"
+#include "core/crashdump.h"
 #define SATDUMP_DLL_EXPORT 1
+
+#include "core/style.h"
 
 #include "db/kepler/kepler_handler.h"
 #include "i18n.h"
@@ -95,6 +97,8 @@ namespace satdump
 
     void initSatDump(bool is_gui)
     {
+        initCrashDump();
+
 #if ENABLE_I18N
         initLanguage();
 #endif

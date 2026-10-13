@@ -5,12 +5,10 @@
 #include "dsp/block.h"
 #include "dsp/device/dev.h"
 #include "dynload.h"
-#include <unistd.h>
-
-#ifdef __ANDROID__
-#include "airspy.h"
+#ifdef _WIN32
+#include <Windows.h>
 #else
-#include <libairspy/airspy.h>
+#include <unistd.h>
 #endif
 
 // #define SPECTRAN_SAMPLERATE_46M 46080000

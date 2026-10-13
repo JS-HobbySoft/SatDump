@@ -209,9 +209,10 @@ namespace satdump
                         ImGui::SameLine();
 
                         // Delete
+                        bool del_this_handle = false;
                         if (widgets::VerySmallButton(u8"\uF1F8") && i < active_filters.size())
                         {
-                            active_filters.erase(active_filters.begin() + i);
+                            del_this_handle = true;
                             quit = true;
                             asyncProcess();
                         }
@@ -258,9 +259,19 @@ namespace satdump
                         ImGui::EndGroup();
                         ImGui::PopID();
                         ImGui::Separator();
+
+                        // Actual delete
+                        if (del_this_handle)
+                            active_filters.erase(active_filters.begin() + i);
                     }
+
+                    if (active_filters.size() == 0)
+                        ImGui::TextDisabled(_("Filters will appear here"));
+
                     ImGui::EndListBox();
                 }
+
+                ImGui::TextDisabled(_(u8"Click the \uF0C3 icon in the menu bar to add filters..."));
 
                 if (needs_to_be_disabled)
                     style::endDisabled();
@@ -400,20 +411,23 @@ namespace satdump
 
                     image_view.mouseCallback = [this](float x, float y)
                     {
+                        // Skip while processing!
+                        if (is_processing)
+                            return;
+
                         auto &img = getImage();
                         ImGui::BeginTooltip();
 
-                        for (int i = 0; i < img.channels(); i++)
-                            ImGui::Text(_("Raw %d : %d F %f"), i + 1, img.get(0, x, y), img.getf(0, x, y));
-
-                        if (image_calib_valid && image.channels() == 1)
+                        if (x >= 0 && y >= 0 && x < img.width() && y < img.height())
                         {
-                            int xc = x; // Correction only needs to be undone for calib
-                            if (correct_fwd_lut.size() > 0 && x > 0 && x < correct_fwd_lut.size())
-                                xc = correct_fwd_lut[x];
+                            for (int i = 0; i < img.channels(); i++)
+                                ImGui::Text(_("Raw %d : %d F %f"), i + 1, img.get(i, x, y), img.getf(i, x, y));
 
-                            double val = image_calib.getVal(img.getf(0, xc, y));
-                            ImGui::Text(_("Unit : %f %s"), val, image_calib.unit.c_str());
+                            if (image_calib_valid && image.channels() == 1)
+                            {
+                                double val = image_calib.getVal(img.getf(0, x, y));
+                                ImGui::Text(_("Unit : %f %s"), val, image_calib.unit.c_str());
+                            }
                         }
 
                         // Handle rotations
@@ -435,6 +449,17 @@ namespace satdump
                                 auto x1 = (img.height() - 1) - y;
                                 y = x;
                                 x = x1;
+                            }
+                        }
+
+                        if (correct_fwd_lut.size() > 0)
+                        {
+                            if (x >= 0 && x < correct_fwd_lut.size())
+                                x = correct_fwd_lut[x];
+                            else
+                            {
+                                ImGui::Text(_("Error in geo-correction!"));
+                                return;
                             }
                         }
 
